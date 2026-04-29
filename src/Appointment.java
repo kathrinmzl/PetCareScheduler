@@ -1,6 +1,7 @@
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class Appointment {
+public class Appointment implements Serializable {
     private String appointmentType;
     private LocalDateTime appointmentDateTime;
     private String notes;

@@ -1,8 +1,9 @@
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Pet {
+public class Pet implements Serializable{
     private String petID;
     private String name;
     private String species;
