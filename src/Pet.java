@@ -35,7 +35,14 @@ public class Pet implements Serializable{
     public LocalDate getRegistrationDate() { return registrationDate; }
     public List<Appointment> getAppointments() { return appointments; }
 
+    public void setAge(int age) {
+        if (age <= 0) {
+            throw new IllegalArgumentException("Age must be positive.");
+        }
+        this.age = age;
+    }
     public void setOwnerContact(String ownerContact) { this.ownerContact = ownerContact; }
+
     public void addAppointment(Appointment appointment) {
         this.appointments.add(appointment);
     }
