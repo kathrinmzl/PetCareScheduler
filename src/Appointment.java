@@ -47,9 +47,9 @@ public class Appointment implements Serializable {
     @Override   
     public String toString() {
         return "Appointment Details:\n" +
-            "Type = " + appointmentType + "\n" +
-            "DateTime = " + appointmentDateTime + "\n" +
-            "Notes = " + notes + "\n";
+            "Type: " + appointmentType + "\n" +
+            "DateTime: " + appointmentDateTime + "\n" +
+            "Notes: " + (notes == null || notes.trim().isEmpty() ? "No notes available" : notes) + "\n";
     }
     
 }
