@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 public class PetCareScheduler {
-    // Instatiante the Scanner object for user input
+    // Instantiante the Scanner object for user input
     private static Scanner scanner = new Scanner(System.in);
 
     // Create a HashMap to store pet objects with petID as the key
@@ -76,8 +76,25 @@ public class PetCareScheduler {
             String name = scanner.nextLine();
             System.out.println("Enter Species: ");
             String species = scanner.nextLine();
-            System.out.println("Enter Age: ");
-            int age = Integer.parseInt(scanner.nextLine());
+
+            // Age with validation
+            int age;
+            while (true) {
+                try {
+                    System.out.print("Enter Age: ");
+                    age = Integer.parseInt(scanner.nextLine());
+
+                    if (age <= 0) {
+                        System.out.println("Age must be positive. Try again.");
+                        continue;
+                    }
+
+                    break;
+
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input. Please enter a number.");
+                }
+            }
             System.out.println("Enter Owner Name: ");
             String ownerName = scanner.nextLine();
             System.out.println("Enter Owner Contact: ");
@@ -108,7 +125,7 @@ public class PetCareScheduler {
 
             String appointmentType;
             while (true) {
-                System.out.println("Enter Appointment Type (Vet Visit, Grooming, Vaccination or Checkup): ");
+                System.out.println("Enter Appointment Type (Vet Visit, Grooming, Vaccination1 or Checkup): ");
                 appointmentType = scanner.nextLine().trim().toLowerCase();
 
                 if (validTypes.contains(appointmentType)) {
@@ -160,23 +177,17 @@ public class PetCareScheduler {
         }
         
         private static void saveData() {
-            try {
-                // Create a FileOutputStream to write to the file named "pets.ser"
-                ObjectOutputStream out = new ObjectOutputStream(
-                    new FileOutputStream("pets.ser")
-                );
-                // Write the entire pet map to the file
-                out.writeObject(petMap);
+            try (ObjectOutputStream out = new ObjectOutputStream(
+                    new FileOutputStream("pets.ser"))) {
 
-                // Success Message
+                out.writeObject(petMap);
                 System.out.println("Data saved successfully.");
+
             } catch (IOException e) {
-                // If something goes wrong while saving, print an error message
                 System.out.println("Error saving data: " + e.getMessage());
             }
 
             System.out.println("\n");
-            
         }
         
         private static void displayDetails() {
@@ -189,22 +200,30 @@ public class PetCareScheduler {
             System.out.println("5. Back to Main Menu");
             System.out.println("Please select an option: ");
 
+            LocalDateTime now = LocalDateTime.now();
+
             String choice = scanner.nextLine();
             switch (choice) {
-                case "1":
-                    System.out.println("Registered Pets:");
-                    // Loop through the petMap and print details of each pet
-                    for (Pet pet : petMap.values()) {
-                        System.out.println("Pet ID: " + pet.getPetID());
-                        System.out.println("Name: " + pet.getName());
-                        System.out.println("Species: " + pet.getSpecies());
-                        System.out.println("Age: " + pet.getAge());
-                        System.out.println("Owner Name: " + pet.getOwnerName());
-                        System.out.println("Owner Contact: " + pet.getOwnerContact());
-                        System.out.println("Registration Date: " + pet.getRegistrationDate());
-                        System.out.println("-----------------------------");
+                case "1": {
+                    if (!petMap.isEmpty()) {
+                        System.out.println("== Registered Pets: ==");
+                        // Loop through the petMap and print details of each pet
+                        for (Pet pet : petMap.values()) {
+                            System.out.println("Pet ID: " + pet.getPetID());
+                            System.out.println("Name: " + pet.getName());
+                            System.out.println("Species: " + pet.getSpecies());
+                            System.out.println("Age: " + pet.getAge());
+                            System.out.println("Owner Name: " + pet.getOwnerName());
+                            System.out.println("Owner Contact: " + pet.getOwnerContact());
+                            System.out.println("Registration Date: " + pet.getRegistrationDate());
+                            System.out.println("-----------------------------");
+                        }
+                    } else {
+                        System.out.println("No pets registered yet.");
                     }
                     break;
+                }
+                    
                 case "2":
                     System.out.println("Enter Pet ID to view appointments: ");
                     String petID = scanner.nextLine().trim();
@@ -212,47 +231,111 @@ public class PetCareScheduler {
                     if (pet != null) {
                         System.out.println("Appointments for " + pet.getName() + ":");
 
-                        System.out.println("Upcoming Appointments:");
-                        for (Appointment appointment : pet.getAppointments()) {
-                            if (appointment.getAppointmentDateTime().isAfter(LocalDateTime.now()) || 
-                            appointment.getAppointmentDateTime().isEqual(LocalDateTime.now())) {
-                                System.out.println(appointment);
-                            }
-                        }
+                        if(!pet.getAppointments().isEmpty()) {
+                            List<Appointment> upcoming = new ArrayList<>();
+                            List<Appointment> past = new ArrayList<>();
 
-                        System.out.println("Past Appointments:");
-                        for (Appointment appointment : pet.getAppointments()) {
-                            if (appointment.getAppointmentDateTime().isBefore(LocalDateTime.now())) {
-                                System.out.println(appointment);
+                            for (Appointment appointment : pet.getAppointments()) {
+                                if (!appointment.getAppointmentDateTime().isBefore(now)) {
+                                    upcoming.add(appointment);
+                                } else {
+                                    past.add(appointment);
+                                }
                             }
+
+                            if (!upcoming.isEmpty()) {
+                                System.out.println("Upcoming Appointments:");
+                                for (Appointment a : upcoming) {
+                                    System.out.println(a);
+                                }
+                            }
+
+                            if (!past.isEmpty()) {
+                                System.out.println("Past Appointments:");
+                                for (Appointment a : past) {
+                                    System.out.println(a);
+                                }
+                            }
+                        } else {
+                            System.out.println("No appointments scheduled for this pet.");
                         }
+                        
                     } else {
                         System.out.println("Pet ID not found. Please try again.");
                     }
 
                     break;
                 case "3":
+                    boolean anyUpcoming = false;
+                    
                     for (Pet p : petMap.values()) {
-                        System.out.println("Upcoming Appointments for " + p.getName() + ":");
                         for (Appointment appointment : p.getAppointments()) {
-                            if (appointment.getAppointmentDateTime().isAfter(LocalDateTime.now()) || 
-                            appointment.getAppointmentDateTime().isEqual(LocalDateTime.now())) {
-                                System.out.println(appointment);
+
+                            if (!appointment.getAppointmentDateTime().isBefore(now)) {
+                                anyUpcoming = true;
+                                break; // found one, stop inner loop
                             }
                         }
-                        System.out.println("-----------------------------");
+
+                        if (anyUpcoming) {
+                            break; // stop outer loop too
+                        }
                     }
+
+                    if(anyUpcoming) {
+                        System.out.println("== All Upcoming Appointments for pets: ==");
+                        for (Pet p : petMap.values()) {
+                            if(!p.getAppointments().isEmpty()) {
+                                System.out.println("Upcoming Appointments for " + p.getName() + ":");
+                                for (Appointment appointment : p.getAppointments()) {
+                                    if (!appointment.getAppointmentDateTime().isBefore(LocalDateTime.now())) {
+                                        System.out.println(appointment);
+                                    }
+                                }
+                                System.out.println("-----------------------------");
+                            }
+                        }
+                    } else {
+                        System.out.println("No upcoming appointments scheduled for any pets.");
+                    }
+        
                     break;
+
                 case "4":
+                    boolean anyPast = false;
+
                     for (Pet p : petMap.values()) {
-                        System.out.println("Past Appointments for " + p.getName() + ":");
                         for (Appointment appointment : p.getAppointments()) {
-                            if (appointment.getAppointmentDateTime().isBefore(LocalDateTime.now())) {
-                                System.out.println(appointment);
+
+                            if (appointment.getAppointmentDateTime().isBefore(now)) {
+                                anyPast = true;
+                                break; // found one, stop inner loop
                             }
                         }
-                        System.out.println("-----------------------------");
+
+                        if (anyPast) {
+                            break; // stop outer loop too
+                        }
                     }
+
+                    if(anyPast) {
+                        System.out.println("== All Past Appointments for pets: ==");
+                        for (Pet p : petMap.values()) {
+                            if(!p.getAppointments().isEmpty()) {
+                                System.out.println("Past Appointments for " + p.getName() + ":");
+                                for (Appointment appointment : p.getAppointments()) {
+                                    if (appointment.getAppointmentDateTime().isBefore(LocalDateTime.now())) {
+                                        System.out.println(appointment);
+                                    }
+                                }
+                                System.out.println("-----------------------------");
+                            }
+                            
+                        }
+                    } else {
+                        System.out.println("No past appointments found for any pets.");
+                    }
+                    
                     break;
                 case "5":
                     return; // Go back to main menu
@@ -331,4 +414,6 @@ public class PetCareScheduler {
             System.out.println("\n");
         }
     }
+
+    // todo: error handling verbessern z.B. für nicht vorhandene appointments, ungültige Eingaben, etc.
 
